@@ -1,14 +1,16 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState, useEffect } from "react";
+import { isOnboardingComplete } from "@/lib/storage";
+import { Onboarding } from "@/components/Onboarding";
+import { HomePage } from "@/pages/HomePage";
 
 const Index = () => {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
-    </div>
-  );
+  const [showOnboarding, setShowOnboarding] = useState(!isOnboardingComplete());
+
+  if (showOnboarding) {
+    return <Onboarding onComplete={() => setShowOnboarding(false)} />;
+  }
+
+  return <HomePage />;
 };
 
 export default Index;
