@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Sparkles, Clock, Target, Flame } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Sparkles, Clock, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StreakBadge } from "@/components/StreakBadge";
 import { WellnessCard } from "@/components/WellnessCard";
@@ -8,6 +8,7 @@ import {
   confirmBreak,
   getReminderSettings,
   getCompletedChallengesCount,
+  updateLastActive,
   type StreakData,
 } from "@/lib/storage";
 import { cn } from "@/lib/utils";
@@ -32,9 +33,37 @@ const getGreeting = (): string => {
 
 export function HomePage() {
   const [streakData, setStreakData] = useState<StreakData>(getStreakData());
-  const [reminderSettings] = useState(getReminderSettings());
-  const [completedChallenges] = useState(getCompletedChallengesCount());
+  const [reminderSettings, setReminderSettings] = useState(getReminderSettings());
+  const [completedChallenges, setCompletedChallenges] = useState(getCompletedChallengesCount());
   const [showConfirmation, setShowConfirmation] = useState(false);
+
+  // Refresh all data from localStorage
+  const refreshData = useCallback(() => {
+    setStreakData(getStreakData());
+    setReminderSettings(getReminderSettings());
+    setCompletedChallenges(getCompletedChallengesCount());
+    updateLastActive();
+  }, []);
+
+  // Refresh data when page becomes visible (user returns from other pages)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refreshData();
+      }
+    };
+
+    // Also refresh on focus (for multi-tab scenarios)
+    const handleFocus = () => refreshData();
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [refreshData]);
 
   const handleConfirmBreak = () => {
     const updated = confirmBreak();

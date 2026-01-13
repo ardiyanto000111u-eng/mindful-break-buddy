@@ -31,6 +31,7 @@ export function RemindersPage() {
   const isNative = Capacitor.isNativePlatform();
 
   const handleSave = async () => {
+    // Save settings to localStorage immediately
     saveReminderSettings(settings);
     
     // Schedule or cancel notifications based on settings
@@ -45,15 +46,24 @@ export function RemindersPage() {
   };
 
   const handleToggle = async (enabled: boolean) => {
+    const newSettings = { ...settings, enabled };
+    setSettings(newSettings);
+    
+    // Auto-save when toggling - don't wait for Save button
+    saveReminderSettings(newSettings);
+    
     if (enabled && isNative) {
       // Request permissions when enabling
       await requestNotificationPermissions();
     }
-    setSettings({ ...settings, enabled });
   };
 
   const handleIntervalChange = (value: number) => {
-    setSettings({ ...settings, intervalMinutes: value });
+    const newSettings = { ...settings, intervalMinutes: value };
+    setSettings(newSettings);
+    
+    // Auto-save interval changes
+    saveReminderSettings(newSettings);
   };
 
   const handleTestNotification = async () => {

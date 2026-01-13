@@ -1,9 +1,15 @@
 /**
  * LocalStorage utilities for MindBreak app
  * All user data is stored locally on device - no cloud sync
+ * 
+ * STORAGE ARCHITECTURE:
+ * - All data persists in localStorage with 'mindbreak_' prefix
+ * - Data survives app restarts, updates, and browser sessions
+ * - No cloud sync = complete privacy
+ * - Auto-save on every user action
  */
 
-// Storage keys
+// Storage keys - all prefixed to avoid conflicts
 const STORAGE_KEYS = {
   ONBOARDING_COMPLETE: 'mindbreak_onboarding_complete',
   REMINDER_SETTINGS: 'mindbreak_reminder_settings',
@@ -11,7 +17,12 @@ const STORAGE_KEYS = {
   CHALLENGES: 'mindbreak_challenges',
   REFLECTIONS: 'mindbreak_reflections',
   DETOX_SESSIONS: 'mindbreak_detox_sessions',
+  LAST_ACTIVE: 'mindbreak_last_active', // Track app usage
+  APP_VERSION: 'mindbreak_app_version', // For future migrations
 } as const;
+
+// Current app version for data migrations
+const CURRENT_APP_VERSION = '1.0.0';
 
 // Types
 export interface ReminderSettings {
@@ -311,6 +322,77 @@ export function resetAllData(): void {
   Object.values(STORAGE_KEYS).forEach(key => {
     removeItem(key);
   });
+}
+
+/**
+ * Update last active timestamp - called on app interactions
+ * Useful for tracking engagement and potential future features
+ */
+export function updateLastActive(): void {
+  setItem(STORAGE_KEYS.LAST_ACTIVE, new Date().toISOString());
+}
+
+export function getLastActive(): string | null {
+  return getItem(STORAGE_KEYS.LAST_ACTIVE, null);
+}
+
+/**
+ * Initialize storage - run on app start
+ * Handles version migrations and ensures data integrity
+ */
+export function initializeStorage(): void {
+  const storedVersion = getItem(STORAGE_KEYS.APP_VERSION, null);
+  
+  // Set current version
+  setItem(STORAGE_KEYS.APP_VERSION, CURRENT_APP_VERSION);
+  
+  // Update last active
+  updateLastActive();
+  
+  // Future: Add version migration logic here
+  // if (storedVersion !== CURRENT_APP_VERSION) {
+  //   migrateData(storedVersion, CURRENT_APP_VERSION);
+  // }
+}
+
+/**
+ * Get a summary of all stored data (for debugging/verification)
+ */
+export function getStorageSummary(): {
+  hasOnboarded: boolean;
+  reminderEnabled: boolean;
+  currentStreak: number;
+  totalDetoxDays: number;
+  completedChallenges: number;
+  totalReflections: number;
+  lastActive: string | null;
+} {
+  const streak = getStreakData();
+  const reminders = getReminderSettings();
+  
+  return {
+    hasOnboarded: isOnboardingComplete(),
+    reminderEnabled: reminders.enabled,
+    currentStreak: streak.currentStreak,
+    totalDetoxDays: streak.totalDetoxDays,
+    completedChallenges: getCompletedChallengesCount(),
+    totalReflections: getReflections().length,
+    lastActive: getLastActive(),
+  };
+}
+
+/**
+ * Check if localStorage is available and working
+ */
+export function isStorageAvailable(): boolean {
+  try {
+    const testKey = 'mindbreak_storage_test';
+    localStorage.setItem(testKey, 'test');
+    localStorage.removeItem(testKey);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 // Export storage keys for settings

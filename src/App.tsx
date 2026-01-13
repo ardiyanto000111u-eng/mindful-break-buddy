@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { BottomNav } from "@/components/BottomNav";
 import { initializeNotifications } from "@/lib/notifications";
+import { initializeStorage, updateLastActive, isStorageAvailable } from "@/lib/storage";
 import Index from "./pages/Index";
 import { RemindersPage } from "./pages/RemindersPage";
 import { ChallengesPage } from "./pages/ChallengesPage";
@@ -32,8 +33,29 @@ function AppLayout({ children }: { children: React.ReactNode }) {
 // App initialization component
 function AppInitializer({ children }: { children: React.ReactNode }) {
   useEffect(() => {
+    // Check if localStorage is available
+    if (!isStorageAvailable()) {
+      console.warn('LocalStorage is not available. Data will not persist.');
+    }
+    
+    // Initialize storage (version tracking, migrations, etc.)
+    initializeStorage();
+    
     // Initialize notifications when app starts
     initializeNotifications();
+    
+    // Track activity on visibility changes
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        updateLastActive();
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
   return <>{children}</>;
