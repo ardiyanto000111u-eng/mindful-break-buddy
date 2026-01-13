@@ -1,15 +1,21 @@
-import { useState, useEffect } from "react";
-import { Bell, Clock, MessageCircle, Save } from "lucide-react";
+import { useState } from "react";
+import { Bell, Clock, MessageCircle, Save, BellRing, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
 import {
   getReminderSettings,
   saveReminderSettings,
   type ReminderSettings,
 } from "@/lib/storage";
+import {
+  scheduleBreakReminders,
+  cancelAllReminders,
+  sendTestNotification,
+  requestNotificationPermissions,
+} from "@/lib/notifications";
 import { cn } from "@/lib/utils";
+import { Capacitor } from "@capacitor/core";
 
 const intervalOptions = [
   { value: 30, label: "30 min" },
@@ -21,19 +27,41 @@ const intervalOptions = [
 export function RemindersPage() {
   const [settings, setSettings] = useState<ReminderSettings>(getReminderSettings());
   const [saved, setSaved] = useState(false);
+  const [testSent, setTestSent] = useState(false);
+  const isNative = Capacitor.isNativePlatform();
 
-  const handleSave = () => {
+  const handleSave = async () => {
     saveReminderSettings(settings);
+    
+    // Schedule or cancel notifications based on settings
+    if (settings.enabled) {
+      await scheduleBreakReminders();
+    } else {
+      await cancelAllReminders();
+    }
+    
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
 
-  const handleToggle = (enabled: boolean) => {
+  const handleToggle = async (enabled: boolean) => {
+    if (enabled && isNative) {
+      // Request permissions when enabling
+      await requestNotificationPermissions();
+    }
     setSettings({ ...settings, enabled });
   };
 
   const handleIntervalChange = (value: number) => {
     setSettings({ ...settings, intervalMinutes: value });
+  };
+
+  const handleTestNotification = async () => {
+    const success = await sendTestNotification();
+    if (success) {
+      setTestSent(true);
+      setTimeout(() => setTestSent(false), 3000);
+    }
   };
 
   return (
@@ -145,15 +173,43 @@ export function RemindersPage() {
         </div>
       </div>
 
-      {/* Active Hours Info */}
+      {/* Test Notification (Native only) */}
+      {isNative && (
+        <div className="px-5 mt-6">
+          <div className="bg-card rounded-2xl p-5 border border-border shadow-card">
+            <div className="flex items-center gap-3 mb-4">
+              <BellRing className="w-5 h-5 text-primary" />
+              <h3 className="font-display font-semibold">Test Notification</h3>
+            </div>
+            <p className="text-sm text-muted-foreground mb-4">
+              Send a test notification to make sure everything is working.
+            </p>
+            <Button
+              variant="outline"
+              size="default"
+              onClick={handleTestNotification}
+              disabled={testSent}
+              className="w-full"
+            >
+              {testSent ? "Notification Sent! ✓" : "Send Test Notification"}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* How Reminders Work */}
       <div className="px-5 mt-6">
         <div className="bg-primary/5 rounded-2xl p-5 border border-primary/10">
-          <h3 className="font-display font-semibold text-foreground mb-2">
-            📱 How Reminders Work
-          </h3>
+          <div className="flex items-center gap-2 mb-2">
+            <Smartphone className="w-5 h-5 text-primary" />
+            <h3 className="font-display font-semibold text-foreground">
+              How Reminders Work
+            </h3>
+          </div>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Set your phone's notification settings to allow MindBreak reminders. 
-            Reminders will gently notify you to take breaks at your chosen interval.
+            {isNative 
+              ? "Reminders are scheduled as local notifications. They'll appear even when the app is closed, gently reminding you to take breaks."
+              : "Install this app on your device to enable push notifications. On the web, reminders work when the app is open."}
           </p>
         </div>
       </div>
