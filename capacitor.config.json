@@ -1,0 +1,15 @@
+{
+  "appId": "app.lovable.84c02b7499034ea3a6c00a96fac38301",
+  "appName": "MindBreak",
+  "webDir": "dist",
+  "server": {
+    "url": "https://84c02b74-9903-4ea3-a6c0-0a96fac38301.lovableproject.com?forceHideBadge=true",
+    "cleartext": true
+  },
+  "android": {
+    "buildOptions": {
+      "keystorePath": null,
+      "keystoreAlias": null
+    }
+  }
+}
