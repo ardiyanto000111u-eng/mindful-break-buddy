@@ -12,6 +12,7 @@ import { RemindersPage } from "./pages/RemindersPage";
 import { ChallengesPage } from "./pages/ChallengesPage";
 import { ProgressPage } from "./pages/ProgressPage";
 import { SettingsPage } from "./pages/SettingsPage";
+import { FocusTimerPage } from "./pages/FocusTimerPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -74,6 +75,7 @@ const App = () => (
               <Route path="/reminders" element={<RemindersPage />} />
               <Route path="/challenges" element={<ChallengesPage />} />
               <Route path="/progress" element={<ProgressPage />} />
+              <Route path="/focus" element={<FocusTimerPage />} />
               <Route path="/settings" element={<SettingsPage />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

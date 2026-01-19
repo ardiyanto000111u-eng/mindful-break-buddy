@@ -17,6 +17,7 @@ const STORAGE_KEYS = {
   CHALLENGES: 'mindbreak_challenges',
   REFLECTIONS: 'mindbreak_reflections',
   DETOX_SESSIONS: 'mindbreak_detox_sessions',
+  FOCUS_SESSIONS: 'mindbreak_focus_sessions', // Focus timer sessions
   LAST_ACTIVE: 'mindbreak_last_active', // Track app usage
   APP_VERSION: 'mindbreak_app_version', // For future migrations
 } as const;
@@ -61,6 +62,14 @@ export interface DetoxSession {
   id: string;
   date: string;
   confirmed: boolean;
+}
+
+export interface FocusSession {
+  id: string;
+  date: string;
+  durationMinutes: number;
+  completed: boolean;
+  actualSeconds?: number; // If ended early, how long they lasted
 }
 
 // Default values
@@ -310,6 +319,36 @@ export function saveDetoxSession(date: string): void {
     });
     setItem(STORAGE_KEYS.DETOX_SESSIONS, sessions);
   }
+}
+
+// Focus sessions
+export function getFocusSessions(): FocusSession[] {
+  return getItem(STORAGE_KEYS.FOCUS_SESSIONS, []);
+}
+
+export function saveFocusSession(
+  durationMinutes: number, 
+  completed: boolean, 
+  actualSeconds?: number
+): FocusSession {
+  const sessions = getFocusSessions();
+  const newSession: FocusSession = {
+    id: Date.now().toString(),
+    date: new Date().toISOString(),
+    durationMinutes,
+    completed,
+    actualSeconds,
+  };
+  
+  sessions.unshift(newSession);
+  setItem(STORAGE_KEYS.FOCUS_SESSIONS, sessions);
+  return newSession;
+}
+
+export function getTotalFocusMinutes(): number {
+  return getFocusSessions()
+    .filter(s => s.completed)
+    .reduce((acc, s) => acc + s.durationMinutes, 0);
 }
 
 // Get completed challenges count
