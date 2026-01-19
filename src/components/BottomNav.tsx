@@ -1,4 +1,4 @@
-import { Home, Bell, Target, BarChart3, Settings } from "lucide-react";
+import { Home, Bell, Target, Timer, BarChart3 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
@@ -11,6 +11,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { path: "/", label: "Home", icon: Home },
   { path: "/reminders", label: "Reminders", icon: Bell },
+  { path: "/focus", label: "Focus", icon: Timer },
   { path: "/challenges", label: "Challenges", icon: Target },
   { path: "/progress", label: "Progress", icon: BarChart3 },
 ];
